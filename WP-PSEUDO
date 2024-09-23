@@ -1,0 +1,117 @@
+// Import necessary libraries
+IMPORT re               // For regular expression operations (not used in this specific code)
+IMPORT datetime         // To handle message timestamps
+IMPORT spacy            // For NLP, specifically Named Entity Recognition (NER)
+IMPORT textblob         // For sentiment analysis
+IMPORT Counter          // To count occurrences of keywords in the messages
+IMPORT Client (from Twilio) // For API communication with Twilio
+
+// Load Spacy's small English model for Named Entity Recognition
+LOAD Spacy small English model
+
+// Twilio API credentials (replace with actual credentials in real usage)
+SET account_sid, auth_token, twilio_whatsapp_number
+
+// Function to fetch WhatsApp messages using Twilio API
+FUNCTION get_whatsapp_messages(account_sid, auth_token):
+    // Create Twilio client using credentials
+    CREATE Twilio client using account_sid and auth_token
+    
+    // Fetch up to 100 messages from Twilio
+    FETCH messages from Twilio API
+    
+    // Initialize an empty list to store chat data
+    INITIALIZE empty list chat_data
+
+    // Loop through each fetched message
+    FOR each message in messages:
+        // Check if the message is from a WhatsApp number and is not from the Twilio number
+        IF message is from WhatsApp and not an automated reply:
+            // Add relevant message metadata (timestamp, sender, message) to chat_data list
+            ADD message metadata (timestamp, sender, message) to chat_data
+    RETURN chat_data  // Return the collected chat data
+
+// Function to count occurrences of keywords in a sentence
+FUNCTION keyword_match(sentence, keywords):
+    // Convert the sentence to lowercase for case-insensitive matching
+    CONVERT sentence to lowercase
+    
+    // Split the sentence into individual words
+    SPLIT sentence into words
+    
+    // Initialize an empty dictionary to store keyword counts
+    INITIALIZE empty dictionary keyword_count
+
+    // Loop through each word in the sentence
+    FOR each word in sentence:
+        // If the word matches any of the predefined keywords, update the count
+        IF word in keywords:
+            INCREMENT keyword count in keyword_count
+    RETURN keyword_count  // Return the dictionary of keyword counts
+
+// Predefined list of keywords related to drug usage
+SET keywords = [list of drug-related terms]
+
+// Function to determine alert level based on the frequency of keyword occurrences
+FUNCTION get_alert_level(count):
+    // Set high alert if the keyword count is greater than 10
+    IF count > 10:
+        RETURN "High Alert"
+    // Set medium alert if the keyword count is between 5 and 10
+    ELSE IF count between 5 and 10:
+        RETURN "Medium Alert"
+    // Set low alert if the keyword count is less than 5
+    ELSE:
+        RETURN "Low Alert"
+
+// Function to perform sentiment analysis and entity extraction on a message
+FUNCTION analyze_nlp(message):
+    // Use Spacy NLP model to process the message for named entity recognition
+    PROCESS message with Spacy model for entity extraction
+    
+    // Perform sentiment analysis using TextBlob to determine message sentiment
+    PERFORM sentiment analysis using TextBlob
+    
+    RETURN sentiment score, extracted entities  // Return the sentiment score and extracted entities
+
+// Function to analyze the fetched WhatsApp messages
+FUNCTION analyze_conversations(chat_data, user_names):
+    // Initialize an empty counter to keep track of keyword occurrences
+    INITIALIZE empty Counter keyword_count
+
+    // Loop through each message in the chat data
+    FOR each message in chat_data:
+        // Extract metadata (timestamp, sender, message) for the current message
+        EXTRACT timestamp, sender, message
+
+        // Analyze messages from specific senders (e.g., monitored contacts)
+        IF sender is in monitored senders list:
+            // Analyze the message using NLP (sentiment analysis and named entity recognition)
+            PERFORM NLP analysis on message (sentiment score, entities)
+
+            // Check if the sentiment is not neutral and the message is not an automated response
+            IF sentiment score != 0 and message is not an automated response:
+                // Print the message details: timestamp, sender, sentiment score, and entities
+                PRINT message details (time, sender, sentiment score, entities)
+                
+                // Perform keyword matching on the message to find drug-related terms
+                keyword_result = keyword_match(message, keywords)
+                
+                // Update the overall keyword count with the result from this message
+                UPDATE keyword_count with keyword_result
+
+    // After analyzing all messages, print the number of suspected keyword matches
+    PRINT total number of suspected keyword matches
+    
+    // For each detected keyword, print the alert level and the frequency of occurrence
+    FOR each keyword in keyword_count:
+        PRINT alert level and count for the keyword
+
+// Fetch WhatsApp messages from Twilio API
+SET chat_data = get_whatsapp_messages(account_sid, auth_token)
+
+IF chat_data is not empty:
+    // If messages are found, analyze the conversations for keywords and sentiment
+    CALL analyze_conversations with chat_data and user names
+ELSE:
+    PRINT "No messages found"  // If no messages are found, print a message
