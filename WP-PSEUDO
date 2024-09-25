@@ -1,14 +1,3 @@
-// Import necessary libraries
-IMPORT re               // For regular expression operations (not used in this specific code)
-IMPORT datetime         // To handle message timestamps
-IMPORT spacy            // For NLP, specifically Named Entity Recognition (NER)
-IMPORT textblob         // For sentiment analysis
-IMPORT Counter          // To count occurrences of keywords in the messages
-IMPORT Client (from Twilio) // For API communication with Twilio
-
-// Load Spacy's small English model for Named Entity Recognition
-LOAD Spacy small English model
-
 // Twilio API credentials (replace with actual credentials in real usage)
 SET account_sid, auth_token, twilio_whatsapp_number
 
@@ -83,11 +72,6 @@ FUNCTION analyze_conversations(chat_data, user_names):
     FOR each message in chat_data:
         // Extract metadata (timestamp, sender, message) for the current message
         EXTRACT timestamp, sender, message
-
-        // Analyze messages from specific senders (e.g., monitored contacts)
-        IF sender is in monitored senders list:
-            // Analyze the message using NLP (sentiment analysis and named entity recognition)
-            PERFORM NLP analysis on message (sentiment score, entities)
 
             // Check if the sentiment is not neutral and the message is not an automated response
             IF sentiment score != 0 and message is not an automated response:
